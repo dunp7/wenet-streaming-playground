@@ -65,6 +65,7 @@ void ConnectionHandler::OnSpeechStart() {
     context_str += contexts[i];
     if (i != contexts.size() - 1) {
       context_str += " | ";
+      
     }
     
   }
