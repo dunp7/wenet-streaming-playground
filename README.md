@@ -4,7 +4,8 @@ An experimental C++ streaming ASR project based on WeNet. This repository is ded
 
 # Current Branch Description
 
-emotion_detection:  streaming code to analyze emotion real-time
+`emotion_detection`:  streaming code to analyze emotion real-time
 
 
 # Source
+- **WeNet**:  [Wenet Source Code](https://github.com/wenet-e2e/wenet)

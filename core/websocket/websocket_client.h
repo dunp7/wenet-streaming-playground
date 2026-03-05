@@ -60,8 +60,6 @@ class WebSocketClient {
   int nbest_ = 1;
   bool continuous_decoding_ = false;
   bool done_ = false;
-
-
   asio::io_context ioc_;
   websocket::stream<tcp::socket> ws_{ioc_};
   std::unique_ptr<std::thread> t_{nullptr};

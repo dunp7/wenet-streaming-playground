@@ -110,8 +110,6 @@ class AsrDecoder {
   void Rescoring();
   void Reset();
   void ResetContinuousDecoding();
-
-
   bool DecodedSomething() const {
     return !result_.empty() && !result_[0].sentence.empty();
   }

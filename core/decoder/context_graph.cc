@@ -88,10 +88,7 @@ int ContextGraph::TraceContext(int cur_state, int unit_id, int* final_state) {
     }
     return next_state;
   }
-  // LOG(FATAL) << "Trace context failed.";
-  LOG(ERROR) << "Trace context failed. cur_state=" << cur_state
-            << " unit_id=" << unit_id;
-  return 0; // prevent die
+  LOG(FATAL) << "Trace context failed.";
 }
 
 void ContextGraph::BuildContextGraph(
@@ -108,23 +105,6 @@ void ContextGraph::BuildContextGraph(
     }
     context_units[context] = units;
   }
-
-  for (const auto& kv : context_units) {
-    const std::string& ctx = kv.first;
-    const std::vector<int>& units = kv.second;
-
-    std::ostringstream oss;
-    oss << "Context: \"" << ctx << "\" -> [ ";
-    for (size_t i = 0; i < units.size(); ++i) {
-      oss << units[i];
-      if (i + 1 != units.size()) oss << ", ";
-    }
-    oss << " ]";
-
-    LOG(INFO) << oss.str();
-
-  }
-
 
   // Build the context graph
   std::unique_ptr<fst::StdVectorFst> ofst(new fst::StdVectorFst());
@@ -147,7 +127,6 @@ void ContextGraph::BuildContextGraph(
     }
   }
   graph_ = std::unique_ptr<fst::StdVectorFst>(new fst::StdVectorFst());
-
   // input/output label are sorted after Determinize
   fst::Determinize(*ofst, graph_.get());
 
@@ -164,15 +143,8 @@ void ContextGraph::BuildContextGraph(
     context_table_[final_state] = context;
   }
 
-  LOG(INFO) << "Context graph states: "
-        << graph_->NumStates();
-
-
-        
   // Convert context graph to AC automaton
   ConvertToAC();
-
-
 }
 
 void ContextGraph::ConvertToAC() {

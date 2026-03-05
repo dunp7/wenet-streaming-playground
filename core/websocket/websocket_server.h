@@ -20,8 +20,6 @@
 #include <string>
 #include <thread>
 #include <utility>
-#include <vector>
-
 
 #include "boost/asio/connect.hpp"
 #include "boost/asio/ip/tcp.hpp"
@@ -60,19 +58,12 @@ class ConnectionHandler {
   void DecodeThreadFunc();
   std::string SerializeResult(bool finish);
 
-  // keyword contextual decoding
-  std::string on_request_context_words_;
-  double on_request_context_score_ = 0.0;
-  std::vector<std::string> on_request_contexts;  
-  // 
-
   bool continuous_decoding_ = false;
   int nbest_ = 1;
   websocket::stream<tcp::socket> ws_;
   std::shared_ptr<FeaturePipelineConfig> feature_config_;
   std::shared_ptr<DecodeOptions> decode_config_;
   std::shared_ptr<DecodeResource> decode_resource_;
-
 
   bool got_start_tag_ = false;
   bool got_end_tag_ = false;
