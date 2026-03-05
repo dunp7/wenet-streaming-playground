@@ -21,6 +21,9 @@ DEFINE_int32(port, 10086, "websocket listening port");
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, false);
   google::InitGoogleLogging(argv[0]);
+  FLAGS_logtostderr = 1;        // log ra stderr
+  FLAGS_alsologtostderr = 1;    // vừa file vừa stderr (nếu muốn)
+
 
   auto decode_config = wenet::InitDecodeOptionsFromFlags();
   auto feature_config = wenet::InitFeaturePipelineConfigFromFlags();

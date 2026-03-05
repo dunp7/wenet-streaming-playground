@@ -7,5 +7,22 @@ An experimental C++ streaming ASR project based on WeNet. This repository is ded
 `emotion_detection`:  streaming code to analyze emotion real-time
 
 
+# Development
+
+**Docker**:
+
+
+**Local Hosting**:
+
+`bash install.sh` to dowload prerequisites --> `bash start.sh` to start websocket server
+
+
+
+
+# Environment
+
+- **OS**: Ubuntu 22.04.5 LTS or higher
+
+
 # Source
 - **WeNet**:  [Wenet Source Code](https://github.com/wenet-e2e/wenet)
