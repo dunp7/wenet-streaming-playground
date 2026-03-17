@@ -78,6 +78,12 @@ void Decode(std::pair<std::string, std::string> wav, bool warmup = false) {
         LOG(INFO) << "Final result (continuous decoding): "
                   << decoder.result()[0].sentence;
         final_result.append(decoder.result()[0].sentence);
+        
+        if (!decoder.result()[0].emotion_scores.empty()) {
+          auto scores = decoder.result()[0].emotion_scores;
+          LOG(INFO) << "Emotion details (continuous): Stress=" << scores[0] 
+                    << " Stability=" << scores[1];
+        }
       }
       decoder.ResetContinuousDecoding();
     }
@@ -101,7 +107,15 @@ void Decode(std::pair<std::string, std::string> wav, bool warmup = false) {
   if (decoder.DecodedSomething()) {
     final_result.append(decoder.result()[0].sentence);
   }
-  LOG(INFO) << wav.first << " Final result: " << final_result << std::endl;
+  
+  std::string emotion_str = "";
+  if (decoder.DecodedSomething() && !decoder.result()[0].emotion_scores.empty()) {
+    auto scores = decoder.result()[0].emotion_scores;
+    emotion_str = " | Emotion: Stress=" + std::to_string(scores[0]) + 
+                  ", Stability=" + std::to_string(scores[1]);
+  }
+  
+  LOG(INFO) << wav.first << " Final result: " << final_result << emotion_str << std::endl;
   LOG(INFO) << "Decoded " << wave_dur << "ms audio taken " << decode_time
             << "ms.";
 
@@ -109,7 +123,7 @@ void Decode(std::pair<std::string, std::string> wav, bool warmup = false) {
     g_mutex.lock();
     std::ostream& buffer = FLAGS_result.empty() ? std::cout : g_result;
     if (!FLAGS_output_nbest) {
-      buffer << wav.first << " " << final_result << std::endl;
+      buffer << wav.first << " " << final_result << emotion_str << std::endl;
     } else {
       buffer << "wav " << wav.first << std::endl;
       auto& results = decoder.result();

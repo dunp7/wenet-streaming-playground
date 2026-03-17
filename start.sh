@@ -15,7 +15,8 @@ stdbuf -oL -eL ./libtorch/build/bin/websocket_server_main \
     --beam 12 \
     --nbest 1 \
     --model_path ./model/final.zip \
-    --unit_path ./model/units.txt \
+    --emotion_model_path ./emotion_model/model_jit.zip \
+    --unit_path ./emotion_model/units.txt \
     > logs/server.log 2>&1 &
 
 WS_PID=$!

@@ -27,6 +27,7 @@
 #endif
 #ifdef USE_TORCH
 #include "decoder/torch_asr_model.h"
+#include "decoder/torch_emotion_model.h"
 #endif
 #ifdef USE_XPU
 #include "xpu/xpu_asr_model.h"
@@ -47,6 +48,7 @@ DEFINE_int32(device_id, 0, "set XPU DeviceID for ASR model");
 
 // TorchAsrModel flags
 DEFINE_string(model_path, "", "pytorch exported model path");
+DEFINE_string(emotion_model_path, "", "pytorch exported emotion model path");
 // OnnxAsrModel flags
 DEFINE_string(onnx_dir, "", "directory where the onnx model is saved");
 // XPUAsrModel flags
@@ -216,6 +218,17 @@ std::shared_ptr<DecodeResource> InitDecodeResourceFromFlags() {
 #endif
   } else {
     LOG(FATAL) << "Please set ONNX, TORCH, XPU, BPU or OpenVINO model path!!!";
+  }
+
+  if (!FLAGS_emotion_model_path.empty()) {
+#ifdef USE_TORCH
+    LOG(INFO) << "Reading torch emotion model " << FLAGS_emotion_model_path;
+    auto emotion_model = std::make_shared<TorchEmotionModel>();
+    emotion_model->Read(FLAGS_emotion_model_path);
+    resource->emotion_model = emotion_model;
+#else
+    LOG(WARNING) << "USE_TORCH is required for emotion model; ignoring " << FLAGS_emotion_model_path;
+#endif
   }
 
   LOG(INFO) << "Reading unit table " << FLAGS_unit_path;

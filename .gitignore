@@ -2,3 +2,4 @@ build/
 fc_base/
 model/
 logs/
+emotion_model/

@@ -31,6 +31,7 @@
 #include "decoder/ctc_prefix_beam_search.h"
 #include "decoder/ctc_wfst_beam_search.h"
 #include "decoder/search_interface.h"
+#include "decoder/torch_emotion_model.h"
 #include "frontend/feature_pipeline.h"
 #include "post_processor/post_processor.h"
 #include "utils/utils.h"
@@ -74,6 +75,7 @@ struct DecodeResult {
   std::string sentence;
   std::unordered_set<std::string> contexts;
   std::vector<WordPiece> word_pieces;
+  std::vector<float> emotion_scores;
 
   static bool CompareFunc(const DecodeResult& a, const DecodeResult& b) {
     return a.score > b.score;
@@ -96,6 +98,7 @@ struct DecodeResource {
   std::shared_ptr<fst::SymbolTable> unit_table = nullptr;
   std::shared_ptr<ContextGraph> context_graph = nullptr;
   std::shared_ptr<PostProcessor> post_processor = nullptr;
+  std::shared_ptr<TorchEmotionModel> emotion_model = nullptr;
 };
 
 // Torch ASR decoder
@@ -139,6 +142,7 @@ class AsrDecoder {
   std::shared_ptr<AsrModel> model_;
   std::shared_ptr<PostProcessor> post_processor_;
   std::shared_ptr<ContextGraph> context_graph_;
+  std::shared_ptr<TorchEmotionModel> emotion_model_;
 
   std::shared_ptr<fst::VectorFst<fst::StdArc>> fst_ = nullptr;
   // output symbol table

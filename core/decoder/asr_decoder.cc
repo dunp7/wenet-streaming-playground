@@ -38,7 +38,8 @@ AsrDecoder::AsrDecoder(std::shared_ptr<FeaturePipeline> feature_pipeline,
       fst_(resource->fst),
       unit_table_(resource->unit_table),
       opts_(opts),
-      ctc_endpointer_(new CtcEndpoint(opts.ctc_endpoint_config)) {
+      ctc_endpointer_(new CtcEndpoint(opts.ctc_endpoint_config)),
+      emotion_model_(resource->emotion_model) {
   if (opts_.reverse_weight > 0) {
     // Check if model has a right to left decoder
     CHECK(model_->is_bidirectional_decoder());
@@ -59,6 +60,9 @@ void AsrDecoder::Reset() {
   num_frames_ = 0;
   global_frame_offset_ = 0;
   model_->Reset();
+  if (emotion_model_) {
+    emotion_model_->Reset();
+  }
   searcher_->Reset();
   feature_pipeline_->Reset();
   ctc_endpointer_->Reset();
@@ -69,6 +73,9 @@ void AsrDecoder::ResetContinuousDecoding() {
   start_ = false;
   result_.clear();
   model_->Reset();
+  if (emotion_model_) {
+    emotion_model_->Reset();
+  }
   searcher_->Reset();
   ctc_endpointer_->Reset();
 }
@@ -88,6 +95,10 @@ DecodeState AsrDecoder::AdvanceDecoding(bool block) {
   DecodeState state = DecodeState::kEndBatch;
   model_->set_chunk_size(opts_.chunk_size);
   model_->set_num_left_chunks(opts_.num_left_chunks);
+  if (emotion_model_) {
+    emotion_model_->set_chunk_size(opts_.chunk_size);
+    emotion_model_->set_num_left_chunks(opts_.num_left_chunks);
+  }
   int num_required_frames = model_->num_frames_for_chunk(start_);
   std::vector<std::vector<float>> chunk_feats;
   // Return immediately if we do not want to block
@@ -106,6 +117,9 @@ DecodeState AsrDecoder::AdvanceDecoding(bool block) {
   Timer timer;
   std::vector<std::vector<float>> ctc_log_probs;
   model_->ForwardEncoder(chunk_feats, &ctc_log_probs);
+  if (emotion_model_) {
+    emotion_model_->ForwardEmotionChunk(chunk_feats);
+  }
   int forward_time = timer.Elapsed();
   if (opts_.ctc_wfst_search_opts.blank_scale != 1.0) {
     for (int i = 0; i < ctc_log_probs.size(); i++) {
@@ -193,6 +207,16 @@ void AsrDecoder::UpdateResult(bool finish) {
     if (post_processor_ != nullptr) {
       path.sentence = post_processor_->Process(path.sentence, finish);
     }
+    
+    // Emotion classifier
+    if (finish && emotion_model_ && i == 0) {
+      torch::Tensor logits = emotion_model_->ForwardEmotionHead();
+      torch::Tensor probs = torch::softmax(logits, -1);
+      int num_emotions = probs.size(1);
+      path.emotion_scores.resize(num_emotions);
+      memcpy(path.emotion_scores.data(), probs[0].data_ptr(), sizeof(float) * num_emotions);
+    }
+    
     result_.emplace_back(path);
   }
 

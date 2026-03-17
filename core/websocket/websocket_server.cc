@@ -107,6 +107,11 @@ std::string ConnectionHandler::SerializeResult(bool finish) {
         word_pieces.emplace_back(jword_piece);
       }
       jpath.emplace("word_pieces", word_pieces);
+      
+      if (!path.emotion_scores.empty()) {
+        json::array scores = {path.emotion_scores[0], path.emotion_scores[1]};
+        jpath.emplace("emotion_scores", scores);
+      }
     }
     nbest.emplace_back(jpath);
 
