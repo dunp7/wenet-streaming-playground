@@ -62,9 +62,9 @@ class ConnectionHandler {
 
   // keyword contextual decoding
   std::string on_request_context_words_;
-  double on_request_context_score_ = 0.0;
-  std::vector<std::string> on_request_contexts;  
-  // 
+  double on_request_context_score_ = 3.0;
+  std::vector<std::string> on_request_contexts;
+  //
 
   bool continuous_decoding_ = false;
   int nbest_ = 1;

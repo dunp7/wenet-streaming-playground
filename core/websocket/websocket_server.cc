@@ -50,33 +50,32 @@ namespace wenet
     ws_.text(true);
     ws_.write(asio::buffer(json::serialize(rv)));
 
-    feature_pipeline_ = std::make_shared<FeaturePipeline>(*feature_config_);
-    decoder_ = std::make_shared<AsrDecoder>(feature_pipeline_, decode_resource_,
-                                            *decode_config_);
+    auto session_resource = std::make_shared<DecodeResource>(*decode_resource_);
 
-    // Dungphamtien
-    std::vector<std::string> contexts;
-    SplitString(on_request_context_words_, &contexts);
-    // DEBUG: show contexts
-    LOG(INFO) << "Contexts after split:";
-    std::string context_str;
-    for (size_t i = 0; i < contexts.size(); ++i)
+    if (!on_request_contexts.empty())
     {
-      context_str += contexts[i];
-      if (i != contexts.size() - 1)
+      LOG(INFO) << "Contexts for this request:";
+      std::string context_str;
+      for (size_t i = 0; i < on_request_contexts.size(); ++i)
       {
-        context_str += " | ";
+        context_str += on_request_contexts[i];
+        if (i != on_request_contexts.size() - 1)
+        {
+          context_str += " | ";
+        }
       }
+      LOG(INFO) << context_str;
+
+      ContextConfig config;
+      config.context_score = on_request_context_score_;
+      session_resource->context_graph = std::make_shared<ContextGraph>(config);
+      session_resource->context_graph->BuildContextGraph(
+          on_request_contexts, session_resource->unit_table);
     }
 
-    LOG(INFO) << context_str << std::endl;
-
-    LOG(INFO) << "Context graph mem loc - " << decode_resource_->context_graph;
-    ContextConfig config;
-    config.context_score = on_request_context_score_;
-    decode_resource_->context_graph = std::make_shared<ContextGraph>(config);
-    decode_resource_->context_graph->BuildContextGraph(contexts, decode_resource_->unit_table);
-    LOG(INFO) << "Context graph mem loc after - " << decode_resource_->context_graph;
+    feature_pipeline_ = std::make_shared<FeaturePipeline>(*feature_config_);
+    decoder_ = std::make_shared<AsrDecoder>(feature_pipeline_, session_resource,
+                                            *decode_config_);
 
     // Start decoder thread
     decode_thread_ =
@@ -256,15 +255,37 @@ namespace wenet
           // add context keywords- dungphamtien
           if (obj.find("context_words") != obj.end())
           {
+            on_request_contexts.clear();
             if (obj["context_words"].is_string())
             {
               on_request_context_words_ = boost::json::value_to<std::string>(obj["context_words"]);
-              on_request_contexts.emplace_back(Trim(on_request_context_words_));
+              SplitString(on_request_context_words_, &on_request_contexts);
+            }
+            else if (obj["context_words"].is_array())
+            {
+              const json::array &context_words = obj["context_words"].as_array();
+              for (const auto &context_word : context_words)
+              {
+                if (!context_word.is_string())
+                {
+                  OnError(
+                      "string array is expected for context_words option");
+                  return;
+                }
+                std::string context = Trim(
+                    boost::json::value_to<std::string>(context_word));
+                if (!context.empty())
+                {
+                  on_request_contexts.emplace_back(context);
+                }
+              }
+              on_request_context_words_ = JoinString(" ", on_request_contexts);
             }
             else
             {
               OnError(
-                  "string is expected for context_keywords option");
+                  "string or string array is expected for context_words option");
+              return;
             }
           }
 
@@ -274,10 +295,15 @@ namespace wenet
             {
               on_request_context_score_ = obj["context_score"].as_double();
             }
+            else if (obj["context_score"].is_int64())
+            {
+              on_request_context_score_ = obj["context_score"].as_int64();
+            }
             else
             {
               OnError(
                   "float is expected for context_score option");
+              return;
             }
           }
 

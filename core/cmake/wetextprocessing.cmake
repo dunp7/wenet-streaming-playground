@@ -1,7 +1,8 @@
 if(NOT ANDROID)
   FetchContent_Declare(wetextprocessing
     GIT_REPOSITORY https://github.com/wenet-e2e/WeTextProcessing.git
-    GIT_TAG        origin/master
+#    GIT_TAG        origin/master
+    GIT_TAG        64761cba3894b9a4d9143618ac3a800e90bc8a61
   )
   FetchContent_MakeAvailable(wetextprocessing)
   include_directories(${wetextprocessing_SOURCE_DIR}/runtime)
