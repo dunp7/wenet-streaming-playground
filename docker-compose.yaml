@@ -1,0 +1,14 @@
+services:
+  wenet-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: inference-wenet:latest
+    container_name: wenet-vi
+    restart: unless-stopped
+    ports:
+      - "1111:8266"
+      - "1112:10088"
+    volumes:
+      - ./model:/app/model
+      - ./logs:/app/logs
