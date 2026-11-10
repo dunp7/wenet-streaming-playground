@@ -1,1 +1,10 @@
 wenet/libtorch/build/
+__pycache__/
+**/__pycache__/
+.git/
+model/
+logs/
+tmp/
+libtorch/
+web/
+test/

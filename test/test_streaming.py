@@ -56,17 +56,17 @@ async def recv_result(ws, output_filename):
 
 async def process_file(config):
     audio_path = config["audio_path"]
-    context_words = config.get("context_words", "")
+    contexts = config.get("contexts", [])
     context_score = config.get("context_score", 0)
 
     audio_name = os.path.basename(audio_path)
 
     # để dễ phân biệt kết quả khi cùng audio nhưng khác context
     context_name = (
-        context_words
+        "_".join(contexts)
         .replace(" ", "_")
         .replace("/", "_")
-        if context_words else "no_context"
+        if contexts else "no_context"
     )
 
     output_path = os.path.join(
@@ -77,7 +77,7 @@ async def process_file(config):
     print(
         f"\nBắt đầu xử lí:"
         f"\n  audio   = {audio_path}"
-        f"\n  context = {context_words}"
+        f"\n  context = {contexts}"
         f"\n  score   = {context_score}"
     )
 
@@ -89,7 +89,7 @@ async def process_file(config):
             "signal": "start",
             "nbest": 20,
             "continuous_decoding": True,
-            "context_words": context_words,
+            "contexts": contexts,
             "context_score": context_score,
         }
 
@@ -101,7 +101,7 @@ async def process_file(config):
         )
 
     print(
-        f"Hoàn thành {audio_name} - context={context_words} "
+        f"Hoàn thành {audio_name} - context={contexts} "
         f"sau {time.time() - start_time:.3f}s"
     )
 
@@ -126,12 +126,12 @@ if __name__ == "__main__":
 
     test_cases = [
         {
-            "audio_path": "/mnt/disk1/free_space/vietnamese-asr-lab/sample/common_voice_vi_25092495.wav",
-            "context_words": "tư",
+            "audio_path": "test/sample/audio_1.wav",
+            "contexts": ["tư"],
             "context_score": 3.0,
         },
         {
-            "audio_path": "/mnt/disk1/free_space/vietnamese-asr-lab/sample/common_voice_vi_25092495.wav",
+            "audio_path": "test/sample/audio_2.wav",
         },
     ]
 

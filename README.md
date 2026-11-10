@@ -16,3 +16,18 @@ This project is built against the upstream [WeNet](https://github.com/wenet-e2e/
 git clone [https://github.com/wenet-e2e/wenet.git](https://github.com/wenet-e2e/wenet.git)
 cd wenet
 git checkout 015469960db73eb19c49a48c020d5ac9db69bae5
+```
+
+---
+
+## Web Demo UI (LinkedIn Demo)
+
+Giao diện Web demo tương tác thời gian thực chạy độc lập ở ngoài Docker:
+
+```bash
+# Khởi động Web UI (mặc định port 3000):
+./start_web.sh 3000
+```
+
+Sau đó truy cập: **`http://localhost:3000`** (giao diện sẽ tự động gọi tới backend WeNet Docker tại port `1111` hoặc local port `8266`).
+
