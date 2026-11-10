@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASR Streaming</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙️</text></svg>">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navbar -->
+    <header class="navbar">
+      <div class="nav-brand">
+        <div class="brand-logo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>WeNet <span>Streaming ASR</span></h1>
+          <p class="tagline">Real-Time Vietnamese Speech Recognition</p>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <div class="connection-badge" id="connBadge">
+          <span class="status-dot"></span>
+          <span class="status-label" id="connLabel">Đang kết nối...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <main class="main-layout">
+      <!-- Left Panel: Audio Input & Visualizer -->
+      <section class="card input-section">
+        <!-- Input Tabs -->
+        <div class="tabs-header">
+          <button class="tab-btn active" data-tab="micTab">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            </svg>
+            Live Microphone
+          </button>
+          <button class="tab-btn" data-tab="fileTab">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            Audio File Demo
+          </button>
+        </div>
+
+        <!-- TAB 1: Live Microphone -->
+        <div class="tab-content active" id="micTab">
+          <div class="mic-controls">
+            <button class="btn-record-main" id="btnRecord">
+              <div class="pulse-ring"></div>
+              <div class="icon-wrap">
+                <svg class="icon-mic" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" x2="12" y1="19" y2="22"/>
+                </svg>
+                <svg class="icon-stop" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="5" y="5" width="14" height="14" rx="2"/>
+                </svg>
+              </div>
+              <span class="btn-text" id="recordBtnText">Bắt đầu nói (Live Mic)</span>
+            </button>
+          </div>
+
+          <!-- Real-time Visualizer Canvas -->
+          <div class="visualizer-container">
+            <canvas id="waveformCanvas" width="600" height="90"></canvas>
+            <div class="visualizer-overlay" id="visualizerOverlay">
+              <span class="viz-status" id="vizStatus">Nhấn nút Microphone để bắt đầu thu âm trực tiếp</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Audio File Demo -->
+        <div class="tab-content" id="fileTab">
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="fileInput" accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac" hidden>
+            <div class="drop-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" x2="12" y1="3" y2="15"/>
+              </svg>
+            </div>
+            <h4>Kéo thả file âm thanh vào đây hoặc <span class="browse-link">Chọn file</span></h4>
+            <p class="drop-hint">Hỗ trợ định dạng WAV, MP3, M4A, FLAC (Tự động resample 16kHz Mono)</p>
+          </div>
+
+          <div class="file-info-card" id="fileInfoCard" style="display: none;">
+            <div class="file-details">
+              <div class="file-icon">🎵</div>
+              <div class="file-meta">
+                <strong id="fileName">sample.wav</strong>
+                <span id="fileMeta">0:00 • 16000Hz • 0.0 MB</span>
+              </div>
+              <button class="btn btn-sm btn-danger-outline btn-remove-file" id="btnRemoveFile" type="button" title="Xóa file đã chọn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                <span>Xóa file</span>
+              </button>
+            </div>
+            <audio id="audioPreview" controls></audio>
+
+            <div class="file-actions">
+              <button class="btn btn-primary" id="btnStreamFile">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <span>Phát & Nhận dạng Stream (Real-time Demo)</span>
+              </button>
+              <button class="btn btn-secondary" id="btnTranscribeRest">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                  <polyline points="13 2 13 9 20 9"/>
+                </svg>
+                <span>Nhận dạng toàn bộ file (Batch)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hotwords & Contextual Biasing Section -->
+        <div class="collapsible-section open">
+          <div class="section-title">
+            <div class="title-with-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span>Từ Khóa Ưu Tiên (Hotwords)</span>
+              <span class="badge-accent">Tăng độ chính xác</span>
+            </div>
+          </div>
+
+          <div class="section-body">
+            <p class="section-desc">
+              Tăng độ chính xác cho tên riêng và thuật ngữ.
+            </p>
+
+            <div class="form-group">
+              <div class="context-tags-quick">
+                <span class="quick-tag" data-word="WeNet">WeNet</span>
+                <span class="quick-tag" data-word="AI">AI</span>
+                <span class="quick-tag" data-word="Hà Nội">Hà Nội</span>
+                <span class="quick-tag" data-word="Việt Nam">Việt Nam</span>
+              </div>
+              <textarea id="contextWords" rows="2" placeholder="Ví dụ: WeNet, AI, Hà Nội, Việt Nam..."></textarea>
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-label">
+                <span>Hệ số ưu tiên (Context Score):</span>
+                <strong id="contextScoreVal">3.0</strong>
+              </div>
+              <input type="range" id="contextScore" min="1.0" max="10.0" step="0.5" value="3.0">
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Performance Metrics -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-title">Thời lượng thu</span>
+            <span class="metric-value" id="metricDuration">00:00</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-title">Gói tin Stream</span>
+            <span class="metric-value" id="metricPackets">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-title">Số từ (Words)</span>
+            <span class="metric-value" id="metricWords">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-title">Độ trễ / Buffer</span>
+            <span class="metric-value" id="metricLatency">~160 ms</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: Transcription Live Output -->
+      <section class="card output-section">
+        <div class="output-header">
+          <div class="output-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <h2>ASR RESULT</h2>
+          </div>
+
+          <div class="output-tools">
+            <button class="btn btn-sm btn-secondary" id="btnRefresh" title="Làm mới kết nối & dừng nhận kết quả">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              <span>Làm mới</span>
+            </button>
+            <button class="btn btn-sm btn-secondary" id="btnCopy" title="Sao chép văn bản">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>Sao chép</span>
+            </button>
+            <button class="btn btn-sm btn-secondary" id="btnDownload" title="Tải file text">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" x2="12" y1="15" y2="3"/>
+              </svg>
+              <span>Tải TXT</span>
+            </button>
+            <button class="btn btn-sm btn-danger-outline" id="btnClear" title="Xóa toàn bộ">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              <span>Xóa</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Transcript Live Stream Display Area -->
+        <div class="transcript-viewport" id="transcriptViewport">
+          <div class="transcript-placeholder" id="transcriptPlaceholder">
+            <div class="empty-icon">🎙️</div>
+            <h3>Sẵn sàng nhận diện giọng nói</h3>
+            <p>Nhấn <strong>"Bắt đầu nói"</strong> hoặc chọn file âm thanh để xem kết quả nhận dạng theo thời gian thực.</p>
+          </div>
+
+          <div class="final-sentences" id="finalSentences"></div>
+        </div>
+
+        <div class="output-footer">
+          <div class="stream-status" id="streamStatus">
+            <span class="status-indicator"></span>
+            <span id="streamStatusMsg">Hệ thống sẵn sàng</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- App Toast Message -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
